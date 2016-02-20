@@ -5,6 +5,9 @@ import os
 import shutil
 import re
 import config_reader
+import logging
+
+import loggers
 
 # the latex template
 tex_body = r"""
@@ -33,44 +36,45 @@ async def process(user: str, latex_expr: str) -> Tuple[str, int, int]:
 
         await write_to_file(latex_expr, user_path)
         await create_pdf(user_path)
-        jpg_path = await conver_pdf_to_jpg(user_path, file_hash)
+        jpg_path = await convert_pdf_to_jpg(user_path, file_hash)
         width, height = await get_width_and_height(user_path, file_hash)
         await copy_to_server(jpg_path, remote_path)
 
         shutil.rmtree(user_path)
 
-    print("Sent" + http_address.format(file_hash), int(width), int(height))
+    tex_logger.debug("Sent (%s, %s, %s)\n" % (http_address.format(file_hash), width, height))
     return http_address.format(file_hash), int(width), int(height)
 
 
 async def write_to_file(latex_expr: str, user_path: str) -> None:
-    print("Writing file.")
+    tex_logger.debug("Writing file... ")
     os.chdir(user_path)
     with open("the_latex.tex", "w") as tex_output:
             tex_output.write(tex_body % latex_expr)
     os.chdir("..")
+    tex_logger.debug("Wrote.\n")
 
 
 async def create_pdf(user_path) -> None:
-    print("Creating pdf...", end="")
+    tex_logger.debug("Creating pdf... ")
     os.chdir(user_path)
     subprocess.run(["pdflatex", "-no-shell-escape", "the_latex.tex"], stdout=subprocess.DEVNULL)
     os.chdir("..")
-    print("Created.")
+    tex_logger.debug("Created.\n")
 
-async def conver_pdf_to_jpg(user_path, the_hash) -> str:
-    print("Converting to jpg...", end="")
+async def convert_pdf_to_jpg(user_path, the_hash) -> str:
+    tex_logger.debug("Converting to jpg...")
     os.chdir(user_path)
     subprocess.run(["convert", "-density", "1000", "the_latex.pdf", "-flatten", "{}.jpg".format(the_hash)])
     os.chdir("..")
-    print(" Converted.")
+    tex_logger.debug(" Converted.\n")
     return os.path.join(user_path, "{}.jpg".format(the_hash))
 
 
 async def copy_to_server(local_path, the_remote_path) -> None:
-    print("Copying to server...")
+    tex_logger.debug("Copying to server... ")
     subprocess.run(["scp", local_path, "{}@{}:{}".format(username, host, the_remote_path)])
-    print("Copied.")
+    tex_logger.debug("Copied.\n")
 
 
 def get_hash(expr: str) -> str:    # TODO: make sure this function is one-to-one
@@ -78,17 +82,19 @@ def get_hash(expr: str) -> str:    # TODO: make sure this function is one-to-one
 
 
 async def url_is_available(url: str) -> bool:
-    print("Checking availability...", end="")
+    tex_logger.debug("Checking availability... ")
     resp = head(url)
-    print("Got {}".format(resp.status_code))
+    tex_logger.debug("Got {}\n".format(resp.status_code))
     return True if resp.status_code < 400 else False
 
 
 async def get_width_and_height(user_path, the_hash) -> Tuple[int, int]:
-    print("Measuring result...", end="")
+    tex_logger.debug("Measuring result...")
     os.chdir(user_path)
     result = subprocess.run(["identify", "-format", r"%wx%h", "{}.jpg".format(the_hash)], stdout=subprocess.PIPE)
     regex = re.match(r"(\d+)x(\d+)", result.stdout.decode())
     os.chdir("..")
-    print("Got {}x{}".format(regex.group(1), regex.group(2)))
+    tex_logger.debug(" Got {}x{}\n".format(regex.group(1), regex.group(2)))
     return regex.group(1), regex.group(2)
+
+tex_logger = logging.getLogger('tex_logger')
