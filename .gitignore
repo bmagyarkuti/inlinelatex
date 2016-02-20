@@ -1,3 +1,2 @@
 *.json
-.idea/deployment.xml
-.idea/webServers.xml
+/.idea
