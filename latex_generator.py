@@ -7,22 +7,6 @@ import re
 import config_reader
 import logging
 
-import loggers
-
-# the latex template
-tex_body = r"""
-\nonstopmode
-\documentclass[border=1pt]{standalone}
-\begin{document}
-$%s$
-\end{document}
-"""
-# parameters for setting up the server
-username = config_reader.username
-host = config_reader.host
-remote_path = config_reader.remote_path
-http_address = config_reader.http_address
-
 
 async def process(user: str, latex_expr: str) -> Tuple[str, int, int]:
     file_hash = get_hash(latex_expr)
@@ -73,11 +57,11 @@ async def convert_pdf_to_jpg(user_path, the_hash) -> str:
 
 async def copy_to_server(local_path, the_remote_path) -> None:
     tex_logger.debug("Copying to server... ")
-    subprocess.run(["scp", local_path, "{}@{}:{}".format(username, host, the_remote_path)])
+    subprocess.run(["scp", local_path, "{}@{}:{}".format(username, host, the_remote_path)], stdout=subprocess.DEVNULL)
     tex_logger.debug("Copied.\n")
 
 
-def get_hash(expr: str) -> str:    # TODO: make sure this function is one-to-one
+def get_hash(expr: str) -> str:
     return str(hash(expr))
 
 
@@ -98,3 +82,18 @@ async def get_width_and_height(user_path, the_hash) -> Tuple[int, int]:
     return regex.group(1), regex.group(2)
 
 tex_logger = logging.getLogger('tex_logger')
+
+# the latex template
+tex_body = r"""
+\nonstopmode
+\documentclass[border=1pt]{standalone}
+\begin{document}
+$%s$
+\end{document}
+"""
+
+# parameters for setting up the server
+username = config_reader.username
+host = config_reader.host
+remote_path = config_reader.remote_path
+http_address = config_reader.http_address
