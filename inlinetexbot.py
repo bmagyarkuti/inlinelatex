@@ -3,6 +3,8 @@ import telepot
 import telepot.async
 from telepot.namedtuple import InlineQueryResultPhoto, InlineQueryResultArticle
 import re
+import logging
+import loggers
 
 import config_reader
 import latex_generator
@@ -11,8 +13,9 @@ import latex_generator
 async def compute_answer(msg):
     def get_error_query():
         return [InlineQueryResultArticle(id="latex_start", title='Invalid LaTex',
-                                                description="Couldn't parse your input.",
-                                                message_text="Sorry, I lost my way around. Didn't mean to send this.", type='article')]
+                                         description="Couldn't parse your input.",
+                                         message_text="Sorry, I lost my way around. Didn't mean to send this.",
+                                         type='article')]
     if len(msg['query']) < 1:   # TODO: maybe not send anything at all?
         results = [InlineQueryResultArticle(id="latex_start", title='Enter LaTeX',
                                             description="Waiting to process your equation. No need to add math mode,"
@@ -32,21 +35,24 @@ async def compute_answer(msg):
     return results
 
 
-class TexItBot(telepot.async.Bot):
+class InlineTexBot(telepot.async.Bot):
     async def handle(self, msg):
         flavor = telepot.flavor(msg)
         if flavor == 'normal':
             content_type, chat_type, chat_id = telepot.glance(msg, flavor)
-            print("Got message %s %s %s" % (content_type, chat_type, chat_id))
+            server_logger.info("Normal %s message, %s." % (content_type, chat_id))
             await bot.sendMessage(int(chat_id), "I'm an inline bot. You cannot speak to me directly")
         elif flavor == 'inline_query':
+            msg_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
+            server_logger.info("Inline equaiton, %s : %s" % (from_id, query_string))
             answerer.answer(msg)
 
 
 TOKEN = config_reader.token
 
-bot = TexItBot(TOKEN)
+bot = InlineTexBot(TOKEN)
 answerer = telepot.async.helper.Answerer(bot, compute_answer)
+server_logger = logging.getLogger('server_logger')
 
 loop = asyncio.get_event_loop()
 loop.create_task(bot.messageLoop())
