@@ -19,7 +19,7 @@ class InlineTexBot(telepot.async.Bot):
             await bot.sendMessage(int(chat_id), "I'm an inline bot. You cannot speak to me directly")
         elif flavor == 'inline_query':
             msg_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
-            server_logger.info("Inline equaiton, %s : %s" % (from_id, query_string))
+            server_logger.info("Inline equation, %s : %s" % (from_id, query_string))
             answerer.answer(msg)
 
 
