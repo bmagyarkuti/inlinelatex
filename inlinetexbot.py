@@ -4,6 +4,7 @@ import telepot.async
 from telepot.namedtuple import InlineQueryResultPhoto, InlineQueryResultArticle
 import re
 import logging
+import os
 
 from inlinetex_loggers import initialize_loggers
 import config_reader
@@ -56,6 +57,8 @@ answerer = telepot.async.helper.Answerer(bot, compute_answer)
 server_logger = logging.getLogger('server_logger')
 
 loop = asyncio.get_event_loop()
+latex_generator.loop = loop
+latex_generator.run_dir = os.getcwd()
 loop.create_task(bot.messageLoop())
 print("Listening...")
 
