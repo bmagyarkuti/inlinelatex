@@ -7,7 +7,6 @@ import config_reader
 import logging
 import asyncio
 import asyncio.subprocess
-from functools import partial
 
 loop = None     # type: asyncio.BaseEventLoop
 run_dir = ""    # type: str
@@ -28,11 +27,9 @@ async def process(user: str, latex_expr: str) -> Tuple[str, int, int]:
             width, height = await get_width_and_height(user_path, file_hash)
             await copy_to_server(jpg_path, remote_path)
         except asyncio.CancelledError:
-            tex_logger.debug("Processing query cancelled.\n")
+            tex_logger.debug("Processing query cancelled.\n")   # we may be too many cycles away from when the exception
+                                                                # was thrown to handle it here
             raise
-        finally:
-            if os.path.exists(user_path):
-                shutil.rmtree(user_path)
 
     tex_logger.debug("Sent (%s, %s, %s)\n" % (http_address.format(file_hash), width, height))
     return http_address.format(file_hash), int(width), int(height)
@@ -50,17 +47,18 @@ async def write_to_file(latex_expr: str, user_path: str) -> None:
 async def create_pdf(user_path) -> None:
     tex_logger.debug("Creating pdf... ")
     os.chdir(user_path)
-    process = await asyncio.create_subprocess_exec(*["pdflatex", "-no-shell-escape", "the_latex.tex"],
-                                             stdout=asyncio.subprocess.DEVNULL)
-    await process.wait()
+    pdflatex_process = await asyncio.create_subprocess_exec(*["pdflatex", "-no-shell-escape", "the_latex.tex"],
+                                                            stdout=asyncio.subprocess.DEVNULL)
+    await pdflatex_process.wait()
     os.chdir(os.path.dirname(user_path))
     tex_logger.debug("Created.\n")
 
 async def convert_pdf_to_jpg(user_path, the_hash) -> str:
     tex_logger.debug("Converting to jpg...")
     os.chdir(user_path)
-    conversion_process = await asyncio.create_subprocess_exec(*["convert", "-density", "1000", "the_latex.pdf", "-flatten",
-                                                      "{}.jpg".format(the_hash)])
+
+    conversion_process = await asyncio.create_subprocess_exec(*["gs", "-o", "{}.jpg".format(the_hash), "-sDEVICE=jpeg",
+                                                                "-dJPEGQ=100", "-r1000", "the_latex.pdf"])
     try:
         await conversion_process.wait()
         os.chdir(os.path.dirname(user_path))
@@ -74,9 +72,10 @@ async def convert_pdf_to_jpg(user_path, the_hash) -> str:
 
 async def copy_to_server(local_path, the_remote_path) -> None:
     tex_logger.debug("Copying to server... ")
-    process = await asyncio.create_subprocess_exec(*["scp", local_path, "{}@{}:{}".format(username, host, the_remote_path)],
-                                         stdout=asyncio.subprocess.DEVNULL)
-    await process.wait()
+    scp_process =\
+        await asyncio.create_subprocess_exec(*["scp", local_path, "{}@{}:{}".format(username, host, the_remote_path)],
+                                             stdout=asyncio.subprocess.DEVNULL)
+    await scp_process.wait()
     tex_logger.debug("Copied.\n")
 
 
@@ -94,8 +93,7 @@ async def url_is_available(url: str) -> bool:
 async def get_width_and_height(user_path, the_hash) -> Tuple[int, int]:
     tex_logger.debug("Measuring result...")
     os.chdir(user_path)
-    result = await asyncio.create_subprocess_exec(*["identify", "-format", r"%wx%h",
-                                                                 "{}.jpg".format(the_hash)],
+    result = await asyncio.create_subprocess_exec(*["identify", "-format", r"%wx%h", "{}.jpg".format(the_hash)],
                                                   stdout=asyncio.subprocess.PIPE)
     stdout_bytes, stderr_byets = await result.communicate()
     regex = re.match(r"(\d+)x(\d+)", stdout_bytes.decode())
