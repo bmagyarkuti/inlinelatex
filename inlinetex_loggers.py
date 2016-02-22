@@ -21,7 +21,7 @@ def initialize_loggers():
     tex_handler.setFormatter(tex_formatter)
 
     tex_logger = logging.getLogger('tex_logger')
-    tex_logger.setLevel(logging.DEBUG)
+    tex_logger.setLevel(logging.INFO)
     tex_logger.addHandler(tex_handler)
 
     # logger for the output of the pdflatex command

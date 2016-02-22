@@ -27,8 +27,7 @@ async def process(user: str, latex_expr: str) -> Tuple[str, int, int]:
             width, height = await get_width_and_height(user_path, file_hash)
             await copy_to_server(jpg_path, remote_path)
         except asyncio.CancelledError:
-            tex_logger.debug("Processing query cancelled.\n")   # we may be too many cycles away from when the exception
-                                                                # was thrown to handle it here
+            tex_logger.info("Processing query cancelled.\n")
             raise
 
     tex_logger.debug("Sent (%s, %s, %s)\n" % (http_address.format(file_hash), width, height))
@@ -49,7 +48,13 @@ async def create_pdf(user_path) -> None:
     os.chdir(user_path)
     pdflatex_process = await asyncio.create_subprocess_exec(*["pdflatex", "-no-shell-escape", "the_latex.tex"],
                                                             stdout=asyncio.subprocess.DEVNULL)
-    await pdflatex_process.wait()
+    try:
+        await pdflatex_process.wait()
+    except asyncio.CancelledError:
+        tex_logger.debug("PDF generation cancelled.")
+        pdflatex_process.kill()
+        raise
+
     os.chdir(os.path.dirname(user_path))
     tex_logger.debug("Created.\n")
 
@@ -58,16 +63,18 @@ async def convert_pdf_to_jpg(user_path, the_hash) -> str:
     os.chdir(user_path)
 
     conversion_process = await asyncio.create_subprocess_exec(*["gs", "-o", "{}.jpg".format(the_hash), "-sDEVICE=jpeg",
-                                                                "-dJPEGQ=100", "-r1000", "the_latex.pdf"])
+                                                                "-dJPEGQ=100", "-r1000", "the_latex.pdf"],
+                                                              stdout=asyncio.subprocess.DEVNULL)
     try:
         await conversion_process.wait()
-        os.chdir(os.path.dirname(user_path))
-        tex_logger.debug(" Converted.\n")
-        return os.path.join(user_path, "{}.jpg".format(the_hash))
     except asyncio.CancelledError:
         tex_logger.debug("Conversion cancelled.\n")
-        await asyncio.create_subprocess_exec(*["kill", str(conversion_process.pid + 1)])
+        conversion_process.kill()
         raise
+
+    os.chdir(os.path.dirname(user_path))
+    tex_logger.debug(" Converted.\n")
+    return os.path.join(user_path, "{}.jpg".format(the_hash))
 
 
 async def copy_to_server(local_path, the_remote_path) -> None:
