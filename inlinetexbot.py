@@ -36,7 +36,7 @@ async def compute_answer(msg):
                                                         "I'll take care of that.",
                                             message_text="Sorry, I lost my way around. Didn't mean to send this.",
                                             type='article')]
-    elif re.match(r"\A\\", msg['query']) and not re.match(r"\A\\[a-zA-Z]+\s", msg['query']):
+    elif re.match(r"\A\\", msg['query']) and not re.match(r"\A\\[a-zA-Z{}]+\s", msg['query']):
         results = get_error_query()
     else:
         try:
