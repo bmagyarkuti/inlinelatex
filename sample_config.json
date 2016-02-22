@@ -1,0 +1,7 @@
+{
+  "token": <<your Telegram token (ask form Botfather)>>,
+  "username": <<your username to the server that will host the generated jpg's>>,
+  "host": <<the hostname of this server, eg my.server.com>>,
+  "remote_path": <<the location of the files directory, eg. public_html/inlinelatex>>,
+  "http_address": <<the url to the jpg files, eg. http://bmagyarkuti.web.elte.hu/texbot/{}.jpg>>
+}

@@ -1,3 +1,9 @@
+"""
+This module reads the configuration JSON. Make sure to point the config_file variable to
+your location for config.json.
+"""
+
+config_file ='config.json'
 import json
 
 
@@ -9,4 +15,4 @@ def read_json_from_file(json_file: str):
             json_dictionary['remote_path'], json_dictionary['http_address'])
 
 (token, username, host,
- remote_path, http_address) = read_json_from_file('config.json')
+ remote_path, http_address) = read_json_from_file(config_file)
