@@ -18,8 +18,8 @@ utility for converting the output pdf.
 
 1. Register a Telegram bot at [Botfather](https://core.telegram.org/bots). Indicate that your bot will respond to
    inline queries. Take note of your access token.
-2. Paste your access token, as well as your credentials into the 'sample_config.json' file. Rename this file to
-   `config.json` (or point the corresponding variable to your file in 'config_reader.py')
+2. Paste your access token, as well as your credentials into the `sample_config.json` file. Rename this file to
+   `config.json` (or point the corresponding variable to your file in `config_reader.py`)
 3. Run the script: `python3.5 inlinetexbot.py`.
 4. To enable more detailed logging, change log-levels to `DEBUG` in the
-   `linlinetex_loggers.py` file.
+   `inlinetex_loggers.py` file.
