@@ -1,3 +1,10 @@
+"""
+This hosts configuration code for InlineLaTeX's three loggers:
+- server_logger logs the telepot server's activity
+- tex_logger follows the call stack of the process() function in latex_generator.py
+- tex_cmd_output_logger is not yet implemented
+"""
+
 import logging
 from sys import stdout
 

@@ -1,3 +1,12 @@
+"""
+This file houses the generation routine that plays out when a user submits a query.
+When a client sends a LaTeX expression, the following steps are performed:
+- A pdf is generated from the expression
+- The pdf is converted to jpeg using gs (The convert command performs much slower.)
+- The jpeg is uploaded to a remote server
+- The url of the uploaded jpeg is relayed back to the client.
+"""
+
 from typing import Tuple
 from requests import head
 import os

@@ -1,3 +1,15 @@
+"""
+Fill-in the information in config.json, and execute this file: python3.5 inlinetexbot.py.
+
+The telepot library's (https://github.com/nickoala/telepot) Bot object is used to interface with the Telegram Bot API.
+Inline queries are processed using an Answerer: this ensures that one client may have at most one process working on
+their query. Old requests by the same user are abandoned: only the latest request is served.
+
+InlineTeXBot creates a folder for each user it receives a query from, and uses this folder as an execution context
+for the pdflatex command. This library is removed and re-created when a new query arrives, but no cleanup occurs when
+the script terminates.
+"""
+
 import asyncio
 import telepot
 import telepot.async
