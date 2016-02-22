@@ -82,7 +82,12 @@ async def copy_to_server(local_path, the_remote_path) -> None:
     scp_process =\
         await asyncio.create_subprocess_exec(*["scp", local_path, "{}@{}:{}".format(username, host, the_remote_path)],
                                              stdout=asyncio.subprocess.DEVNULL)
-    await scp_process.wait()
+    try:
+        await scp_process.wait()
+    except asyncio.CancelledError:
+        tex_logger.debug("Cancelled while uplading result to server.\n")
+        scp_process.kill()
+        raise
     tex_logger.debug("Copied.\n")
 
 
@@ -100,9 +105,14 @@ async def url_is_available(url: str) -> bool:
 async def get_width_and_height(user_path, the_hash) -> Tuple[int, int]:
     tex_logger.debug("Measuring result...")
     os.chdir(user_path)
-    result = await asyncio.create_subprocess_exec(*["identify", "-format", r"%wx%h", "{}.jpg".format(the_hash)],
+    measurer_process = await asyncio.create_subprocess_exec(*["identify", "-format", r"%wx%h", "{}.jpg".format(the_hash)],
                                                   stdout=asyncio.subprocess.PIPE)
-    stdout_bytes, stderr_byets = await result.communicate()
+    try:
+        stdout_bytes, stderr_byets = await measurer_process.communicate()
+    except asyncio.CancelledError:
+        tex_logger.debug("Cancelled while measuring dimensions\n")
+        measurer_process.kill()
+        return
     regex = re.match(r"(\d+)x(\d+)", stdout_bytes.decode())
     os.chdir(os.path.dirname(user_path))
     tex_logger.debug(" Got {}x{}\n".format(regex.group(1), regex.group(2)))

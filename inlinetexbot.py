@@ -2,7 +2,6 @@ import asyncio
 import telepot
 import telepot.async
 from telepot.namedtuple import InlineQueryResultPhoto, InlineQueryResultArticle
-import re
 import logging
 import os
 
@@ -32,12 +31,12 @@ async def compute_answer(msg):
                                          type='article')]
     if len(msg['query']) < 1:   # TODO: maybe don't send anything at all?
         results = [InlineQueryResultArticle(id="latex_start", title='Enter LaTeX',
-                                            description="Waiting to process your equation. No need to add math mode,"
+                                            description="Waiting to process your equation. No need to add math mode, "
                                                         "I'll take care of that.",
                                             message_text="Sorry, I lost my way around. Didn't mean to send this.",
-                                            type='article')]
-    elif re.match(r"\A\\", msg['query']) and not re.match(r"\A\\[a-zA-Z_{}\\0-9]+\s", msg['query']):
-        results = get_error_query()
+                                            thumb_url='http://a1.mzstatic.com/eu/r30/Purple69/v4/b2/f2/92/b2f292f4-a27f'
+                                                      '-7ecc-fa20-19d84095e035/icon256.png', thumb_width=256,
+                                            thumb_height=256, type='article')]
     else:
         try:
             jpg_url, width, height = await latex_generator.process(str(msg['from']['id']), msg['query'])
