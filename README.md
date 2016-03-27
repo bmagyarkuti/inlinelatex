@@ -1,8 +1,10 @@
 # InlineLaTeX
 A LaTeX-producing inline bot for Telegram Messenger.
 
-The bot is online. Try by querying `@inlinetexbot`.
-If all goes right, you'll be seeing something like this: ![](demo.gif).
+~~The bot is online. Try by querying `@inlinetexbot`.
+If all goes right, you'll be seeing something like this:~~
+The bot is offline. This is what it'll look like if you run your own version:
+![](demo.gif).
 
 ## Notes on the Source
 InlineLaTex relies on the async version of the `telepot` libraries. See that module's
